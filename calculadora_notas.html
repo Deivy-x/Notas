@@ -241,6 +241,41 @@ body{
 .c-amber{color:var(--amber);}
 .c-a1{color:var(--a1);}
 
+/* ===== RESPONSIVE ===== */
+@media(max-width:480px){
+  .wrap{padding:1.5rem 1rem 4rem;}
+  .header h1{font-size:26px;}
+  .header p{font-size:13px;}
+  .card{padding:1.1rem;}
+  .col-headers{grid-template-columns:1fr 1fr 32px;gap:6px;}
+  .nota-row{grid-template-columns:1fr 1fr 32px;gap:6px;}
+  .nota-row input{padding:9px 10px;font-size:13px;}
+  .btn-del{width:32px;height:32px;}
+  .meta-row label{font-size:12px;}
+  .meta-row input{width:62px;font-size:13px;}
+  .btn-calc{font-size:14px;padding:12px;}
+  .metrics{grid-template-columns:1fr 1fr;gap:7px;}
+  .metrics .metric:last-child{grid-column:span 2;}
+  .metric{padding:11px;}
+  .metric-val{font-size:18px;}
+  .main-result-val{font-size:32px;}
+  .main-result-sub{font-size:12px;}
+  .badge{font-size:11px;}
+  .watermark{font-size:10px;bottom:14px;right:14px;}
+}
+@media(max-width:360px){
+  .header h1{font-size:22px;}
+  .metrics{grid-template-columns:1fr;}
+  .metrics .metric:last-child{grid-column:span 1;}
+  .main-result-val{font-size:28px;}
+}
+/* touch devices — remove hover effects that feel wrong */
+@media(hover:none){
+  .card:hover{border-color:var(--border);box-shadow:none;}
+  .metric:hover{transform:none;}
+  .btn-add:hover{transform:none;}
+  .btn-calc:hover{transform:none;box-shadow:none;}
+}
 /* number counter animation */
 @keyframes countUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
 .count-anim{animation:countUp 0.5s cubic-bezier(0.16,1,0.3,1) both;}
