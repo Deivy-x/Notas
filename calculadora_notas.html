@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notas — Deivy Flowless</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#07080f;--s1:#0d1020;--s2:#131629;
+  --border:rgba(120,100,255,0.15);--border2:rgba(120,100,255,0.3);
+  --text:#eeeeff;--muted:#6b6d8a;
+  --a1:#7c6dfa;--a2:#f059c0;--a3:#00e5c0;
+  --a1d:rgba(124,109,250,0.12);--a2d:rgba(240,89,192,0.12);--a3d:rgba(0,229,192,0.1);
+  --green:#2edb8f;--red:#ff5f7e;--amber:#ffb547;
+  --r:16px;--rs:10px;
+}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Syne',sans-serif;
+  background:var(--bg);color:var(--text);
+  min-height:100vh;overflow-x:hidden;position:relative;
+}
+
+/* ---- CANVAS BG ---- */
+#bgCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;}
+
+/* ---- RAIN ---- */
+#rain{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1;overflow:hidden;}
+.drop{position:absolute;top:-70px;animation:fall linear infinite;user-select:none;pointer-events:none;}
+@keyframes fall{
+  0%{transform:translateY(-70px) rotate(0deg) scale(1);}
+  80%{opacity:1;}
+  100%{transform:translateY(110vh) rotate(720deg) scale(0.8);opacity:0;}
+}
+
+/* ---- WATERMARK ---- */
+.watermark{
+  position:fixed;bottom:18px;right:22px;
+  font-family:'Space Mono',monospace;font-size:11px;
+  letter-spacing:0.14em;color:rgba(124,109,250,0.3);
+  z-index:999;pointer-events:none;text-transform:uppercase;
+  animation:wmpulse 4s ease infinite;
+}
+.watermark span{color:rgba(240,89,192,0.45);}
+@keyframes wmpulse{0%,100%{opacity:0.7;}50%{opacity:1;}}
+
+/* ---- ORBS ---- */
+.orb{position:fixed;border-radius:50%;pointer-events:none;z-index:0;filter:blur(90px);}
+.orb1{width:500px;height:500px;background:rgba(124,109,250,0.07);top:-150px;left:-150px;animation:orbFloat1 12s ease-in-out infinite;}
+.orb2{width:400px;height:400px;background:rgba(240,89,192,0.06);bottom:-100px;right:-100px;animation:orbFloat2 15s ease-in-out infinite;}
+.orb3{width:300px;height:300px;background:rgba(0,229,192,0.05);top:45%;left:50%;transform:translateX(-50%);animation:orbFloat3 10s ease-in-out infinite;}
+@keyframes orbFloat1{0%,100%{transform:translate(0,0);}50%{transform:translate(40px,30px);}}
+@keyframes orbFloat2{0%,100%{transform:translate(0,0);}50%{transform:translate(-30px,-40px);}}
+@keyframes orbFloat3{0%,100%{transform:translateX(-50%) translateY(0);}50%{transform:translateX(-50%) translateY(-30px);}}
+
+/* ---- LAYOUT ---- */
+.wrap{position:relative;z-index:2;max-width:520px;margin:0 auto;padding:2.5rem 1.25rem 5rem;}
+
+/* ---- HEADER ---- */
+.header{margin-bottom:2.5rem;padding-top:0.5rem;}
+.header h1{
+  font-size:34px;font-weight:800;
+  background:linear-gradient(120deg,#eeeeff 20%,var(--a1) 55%,var(--a2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  letter-spacing:-0.03em;line-height:1.1;margin-bottom:10px;
+  animation:titleReveal 0.8s cubic-bezier(0.16,1,0.3,1) both;
+}
+@keyframes titleReveal{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+.header p{
+  font-size:14px;color:var(--muted);font-weight:400;line-height:1.6;
+  animation:titleReveal 0.8s 0.15s cubic-bezier(0.16,1,0.3,1) both;
+}
+
+/* ---- CARD ---- */
+.card{
+  background:var(--s1);border:1px solid var(--border);
+  border-radius:var(--r);padding:1.5rem;margin-bottom:1rem;
+  position:relative;overflow:hidden;
+  animation:cardReveal 0.7s cubic-bezier(0.16,1,0.3,1) both;
+  transition:border-color 0.3s,box-shadow 0.3s;
+}
+.card:hover{border-color:var(--border2);box-shadow:0 0 30px rgba(124,109,250,0.06);}
+@keyframes cardReveal{from{opacity:0;transform:translateY(24px);}to{opacity:1;transform:translateY(0);}}
+.card:nth-child(2){animation-delay:0.1s;}
+.card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--a1),var(--a2),var(--a3));
+  opacity:0.7;
+}
+/* shimmer sweep */
+.card::after{
+  content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.02),transparent);
+  animation:shimmer 6s ease-in-out infinite;pointer-events:none;
+}
+@keyframes shimmer{0%{left:-100%;}60%,100%{left:160%;}}
+
+.section-label{
+  font-size:10px;font-weight:700;letter-spacing:0.12em;
+  text-transform:uppercase;color:var(--muted);margin-bottom:1rem;
+  display:flex;align-items:center;gap:8px;
+}
+.section-label::after{content:'';flex:1;height:1px;background:var(--border);}
+
+.col-headers{display:grid;grid-template-columns:1fr 1fr 36px;gap:8px;margin-bottom:8px;padding:0 2px;}
+.col-headers span{font-size:11px;color:var(--muted);}
+
+.notas-list{display:flex;flex-direction:column;gap:7px;margin-bottom:12px;}
+
+.nota-row{
+  display:grid;grid-template-columns:1fr 1fr 36px;
+  gap:8px;align-items:center;
+  animation:rowIn 0.25s cubic-bezier(0.16,1,0.3,1) both;
+}
+@keyframes rowIn{from{opacity:0;transform:translateX(-14px);}to{opacity:1;transform:translateX(0);}}
+
+.nota-row input{
+  width:100%;padding:10px 13px;
+  font-size:14px;font-family:'Space Mono',monospace;
+  background:var(--s2);border:1px solid var(--border);
+  border-radius:var(--rs);color:var(--text);outline:none;
+  transition:border-color 0.2s,box-shadow 0.2s,background 0.2s;
+  -moz-appearance:textfield;
+}
+.nota-row input::-webkit-outer-spin-button,.nota-row input::-webkit-inner-spin-button{-webkit-appearance:none;}
+.nota-row input:focus{border-color:var(--a1);box-shadow:0 0 0 3px rgba(124,109,250,0.15);background:#161828;}
+.nota-row input::placeholder{color:var(--muted);}
+
+.btn-del{
+  width:36px;height:36px;background:transparent;
+  border:1px solid var(--border);border-radius:var(--rs);
+  color:var(--muted);cursor:pointer;font-size:16px;
+  display:flex;align-items:center;justify-content:center;
+  transition:all 0.18s;flex-shrink:0;
+}
+.btn-del:hover{background:rgba(255,95,126,0.12);border-color:var(--red);color:var(--red);transform:rotate(90deg);}
+
+.btn-add{
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  font-size:13px;font-family:'Syne',sans-serif;font-weight:600;
+  padding:10px 14px;background:transparent;
+  border:1px dashed rgba(124,109,250,0.3);border-radius:var(--rs);
+  color:var(--muted);cursor:pointer;
+  transition:all 0.2s;width:100%;margin-bottom:1.25rem;
+}
+.btn-add:hover{border-color:var(--a1);color:var(--a1);background:var(--a1d);transform:translateY(-1px);}
+
+.meta-row{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 14px;background:var(--s2);
+  border:1px solid var(--border);border-radius:var(--rs);margin-bottom:1.25rem;
+  transition:border-color 0.2s;
+}
+.meta-row:focus-within{border-color:var(--border2);}
+.meta-row label{font-size:13px;color:var(--muted);flex:1;}
+.meta-row input{
+  width:72px;padding:7px 10px;
+  font-size:14px;font-family:'Space Mono',monospace;font-weight:700;
+  background:var(--bg);border:1px solid var(--border2);
+  border-radius:var(--rs);color:var(--a1);outline:none;
+  text-align:center;-moz-appearance:textfield;transition:all 0.2s;
+}
+.meta-row input::-webkit-outer-spin-button,.meta-row input::-webkit-inner-spin-button{-webkit-appearance:none;}
+.meta-row input:focus{border-color:var(--a2);color:var(--a2);}
+
+.btn-calc{
+  width:100%;padding:14px;
+  font-size:15px;font-weight:700;font-family:'Syne',sans-serif;
+  background:linear-gradient(135deg,var(--a1),var(--a2));
+  color:#fff;border:none;border-radius:var(--rs);
+  cursor:pointer;transition:all 0.25s;
+  letter-spacing:0.03em;position:relative;overflow:hidden;
+}
+.btn-calc:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(124,109,250,0.3);}
+.btn-calc:active{transform:scale(0.97);}
+.btn-calc .ripple{
+  position:absolute;border-radius:50%;
+  background:rgba(255,255,255,0.25);
+  transform:scale(0);animation:ripple 0.6s ease-out forwards;
+  pointer-events:none;
+}
+@keyframes ripple{to{transform:scale(4);opacity:0;}}
+
+.peso-warning{
+  font-size:12px;color:var(--amber);margin-top:10px;display:none;
+  padding:8px 12px;background:rgba(255,181,71,0.08);
+  border-radius:var(--rs);border:1px solid rgba(255,181,71,0.2);
+}
+
+/* ---- RESULT ---- */
+.result-card{
+  background:var(--s1);border:1px solid var(--border);
+  border-radius:var(--r);padding:1.5rem;display:none;
+  position:relative;overflow:hidden;
+  transition:border-color 0.3s;
+}
+.result-card.show{display:block;animation:fadeUp 0.4s cubic-bezier(0.16,1,0.3,1) both;}
+.result-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--a3),var(--a1),var(--a2));
+}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:1.25rem;}
+.metric{
+  background:var(--s2);border-radius:var(--rs);
+  padding:14px;border:1px solid var(--border);
+  transition:transform 0.2s,border-color 0.2s;
+}
+.metric:hover{transform:translateY(-2px);border-color:var(--border2);}
+.metric-label{font-size:10px;color:var(--muted);margin-bottom:7px;text-transform:uppercase;letter-spacing:0.07em;}
+.metric-val{font-size:22px;font-weight:700;font-family:'Space Mono',monospace;}
+
+.divider{border:none;border-top:1px solid var(--border);margin:1.25rem 0;}
+
+.main-result{display:flex;flex-direction:column;gap:6px;}
+.main-result-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;}
+.main-result-val{
+  font-size:42px;font-weight:800;
+  font-family:'Space Mono',monospace;
+  letter-spacing:-0.04em;line-height:1;
+}
+.main-result-sub{font-size:13px;color:var(--muted);margin-top:4px;line-height:1.6;}
+
+.badge{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:12px;font-weight:700;padding:5px 14px;border-radius:99px;
+  margin-top:10px;text-transform:uppercase;letter-spacing:0.06em;
+  font-family:'Syne',sans-serif;width:fit-content;
+  animation:badgePop 0.4s 0.2s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+@keyframes badgePop{from{opacity:0;transform:scale(0.7);}to{opacity:1;transform:scale(1);}}
+.badge-green{background:rgba(46,219,143,0.12);color:var(--green);border:1px solid rgba(46,219,143,0.3);}
+.badge-red{background:rgba(255,95,126,0.12);color:var(--red);border:1px solid rgba(255,95,126,0.3);}
+.badge-amber{background:rgba(255,181,71,0.12);color:var(--amber);border:1px solid rgba(255,181,71,0.3);}
+
+.c-green{color:var(--green);}
+.c-red{color:var(--red);}
+.c-amber{color:var(--amber);}
+.c-a1{color:var(--a1);}
+
+/* number counter animation */
+@keyframes countUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.count-anim{animation:countUp 0.5s cubic-bezier(0.16,1,0.3,1) both;}
+
+/* confetti particle */
+.confetti-piece{
+  position:fixed;pointer-events:none;z-index:9999;
+  width:8px;height:8px;border-radius:2px;
+  animation:confettiFall 1.4s ease-out forwards;
+}
+@keyframes confettiFall{
+  0%{transform:translateY(0) rotate(0deg);opacity:1;}
+  100%{transform:translateY(300px) rotate(720deg);opacity:0;}
+}
+</style>
+</head>
+<body>
+
+<canvas id="bgCanvas"></canvas>
+<div id="rain"></div>
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="orb orb3"></div>
+<div class="watermark">Deivy <span>Flowless</span> ✦</div>
+
+<div class="wrap">
+  <div class="header">
+    <h1>Calculadora<br>de Notas</h1>
+    <p>Ingresa tus cortes y descubre cuánto necesitas para ganar la materia.</p>
+  </div>
+
+  <div class="card">
+    <p class="section-label">Mis cortes</p>
+    <div class="col-headers">
+      <span>Nota (0 – 5)</span>
+      <span>Peso (%)</span>
+      <span></span>
+    </div>
+    <div class="notas-list" id="notas-list"></div>
+    <button class="btn-add" onclick="addNota()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      agregar corte
+    </button>
+    <div class="meta-row">
+      <label>Nota mínima para ganar</label>
+      <input type="number" id="meta" value="3.0" step="0.1" min="0" max="5"/>
+    </div>
+    <button class="btn-calc" id="btnCalc" onclick="calcular(event)">✦ Calcular resultado</button>
+    <p class="peso-warning" id="peso-warn">⚠ Los pesos no suman 100% — revisa tus porcentajes</p>
+  </div>
+
+  <div class="result-card" id="result">
+    <p class="section-label">Resultado</p>
+    <div class="metrics" id="metrics"></div>
+    <div class="divider"></div>
+    <div class="main-result">
+      <span class="main-result-label" id="res-lbl">para ganar necesitas</span>
+      <span class="main-result-val" id="res-val"></span>
+      <span class="main-result-sub" id="res-sub"></span>
+      <span class="badge" id="res-badge"></span>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===== CANVAS PARTICLES ===== */
+const canvas = document.getElementById('bgCanvas');
+const ctx = canvas.getContext('2d');
+let W, H, particles = [];
+
+function resize(){
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+class Particle {
+  constructor(){this.reset();}
+  reset(){
+    this.x = Math.random()*W;
+    this.y = Math.random()*H;
+    this.r = Math.random()*1.5+0.3;
+    this.vx = (Math.random()-0.5)*0.3;
+    this.vy = (Math.random()-0.5)*0.3;
+    this.alpha = Math.random()*0.4+0.05;
+    this.color = Math.random()>0.5 ? '124,109,250' : '240,89,192';
+  }
+  update(){
+    this.x+=this.vx; this.y+=this.vy;
+    if(this.x<0||this.x>W||this.y<0||this.y>H) this.reset();
+  }
+  draw(){
+    ctx.beginPath();
+    ctx.arc(this.x,this.y,this.r,0,Math.PI*2);
+    ctx.fillStyle=`rgba(${this.color},${this.alpha})`;
+    ctx.fill();
+  }
+}
+
+for(let i=0;i<90;i++) particles.push(new Particle());
+
+let mx=W/2, my=H/2;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;});
+
+function drawLines(){
+  particles.forEach(p=>{
+    const dx=p.x-mx, dy=p.y-my;
+    const dist=Math.sqrt(dx*dx+dy*dy);
+    if(dist<120){
+      ctx.beginPath();
+      ctx.moveTo(p.x,p.y);ctx.lineTo(mx,my);
+      ctx.strokeStyle=`rgba(124,109,250,${0.08*(1-dist/120)})`;
+      ctx.lineWidth=0.5;ctx.stroke();
+    }
+    particles.forEach(p2=>{
+      const dx2=p.x-p2.x,dy2=p.y-p2.y;
+      const d2=Math.sqrt(dx2*dx2+dy2*dy2);
+      if(d2<80){
+        ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(p2.x,p2.y);
+        ctx.strokeStyle=`rgba(124,109,250,${0.06*(1-d2/80)})`;
+        ctx.lineWidth=0.4;ctx.stroke();
+      }
+    });
+  });
+}
+
+function animateCanvas(){
+  ctx.clearRect(0,0,W,H);
+  particles.forEach(p=>{p.update();p.draw();});
+  drawLines();
+  requestAnimationFrame(animateCanvas);
+}
+animateCanvas();
+
+/* ===== EMOJI RAIN ===== */
+const emojis=['📚','✏️','📐','📏','🔢','📝','🧮','📊','🎓','💡','🧠','⚡','🔬','📖','✍️','🏆','💯','🎯','➕','➖','➗','✖️'];
+
+function initRain(){
+  const rain=document.getElementById('rain');
+  for(let i=0;i<32;i++){
+    const d=document.createElement('div');
+    d.className='drop';
+    d.textContent=emojis[Math.floor(Math.random()*emojis.length)];
+    d.style.left=Math.random()*100+'%';
+    d.style.fontSize=(13+Math.random()*14)+'px';
+    const dur=7+Math.random()*14;
+    d.style.animationDuration=dur+'s';
+    d.style.animationDelay=(-Math.random()*14)+'s';
+    d.style.opacity=(0.07+Math.random()*0.13);
+    rain.appendChild(d);
+  }
+}
+initRain();
+
+/* ===== ROWS ===== */
+function addNota(nota='',peso=''){
+  const list=document.getElementById('notas-list');
+  const div=document.createElement('div');
+  div.className='nota-row';
+  div.innerHTML=`
+    <input type="number" placeholder="ej. 3.5" min="0" max="5" step="0.1" class="nota-v" value="${nota}">
+    <input type="number" placeholder="ej. 20" min="0" max="100" step="1" class="nota-p" value="${peso}">
+    <button class="btn-del" onclick="removeRow(this)" title="eliminar">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>`;
+  list.appendChild(div);
+}
+
+function removeRow(btn){
+  const row=btn.parentElement;
+  row.style.transition='all 0.25s ease';
+  row.style.opacity='0';
+  row.style.transform='translateX(20px)';
+  setTimeout(()=>row.remove(),240);
+}
+
+/* ===== RIPPLE ===== */
+document.getElementById('btnCalc').addEventListener('click',function(e){
+  const btn=this;
+  const ripple=document.createElement('span');
+  ripple.className='ripple';
+  const rect=btn.getBoundingClientRect();
+  const size=Math.max(rect.width,rect.height);
+  ripple.style.width=ripple.style.height=size+'px';
+  ripple.style.left=(e.clientX-rect.left-size/2)+'px';
+  ripple.style.top=(e.clientY-rect.top-size/2)+'px';
+  btn.appendChild(ripple);
+  setTimeout(()=>ripple.remove(),600);
+});
+
+/* ===== CONFETTI ===== */
+function launchConfetti(){
+  const colors=['#7c6dfa','#f059c0','#00e5c0','#2edb8f','#ffb547'];
+  for(let i=0;i<60;i++){
+    const c=document.createElement('div');
+    c.className='confetti-piece';
+    c.style.left=Math.random()*100+'vw';
+    c.style.top='30vh';
+    c.style.background=colors[Math.floor(Math.random()*colors.length)];
+    c.style.animationDelay=(Math.random()*0.6)+'s';
+    c.style.animationDuration=(1+Math.random()*0.8)+'s';
+    c.style.borderRadius=Math.random()>0.5?'50%':'2px';
+    document.body.appendChild(c);
+    setTimeout(()=>c.remove(),2000);
+  }
+}
+
+/* ===== COUNTER ANIMATION ===== */
+function animateCount(el, target, suffix='', decimals=2){
+  const start=0, dur=800, startTime=performance.now();
+  function step(now){
+    const t=Math.min((now-startTime)/dur,1);
+    const ease=1-Math.pow(1-t,3);
+    const val=(start+(target-start)*ease).toFixed(decimals);
+    el.textContent=val+suffix;
+    if(t<1) requestAnimationFrame(step);
+    else el.textContent=target.toFixed(decimals)+suffix;
+  }
+  requestAnimationFrame(step);
+}
+
+/* ===== MAIN CALC ===== */
+function calcular(e){
+  const rows=document.querySelectorAll('.nota-row');
+  const meta=parseFloat(document.getElementById('meta').value)||3.0;
+  const warn=document.getElementById('peso-warn');
+  let acumulado=0,pesoUsado=0,tieneVacia=false;
+
+  rows.forEach(r=>{
+    const v=parseFloat(r.querySelector('.nota-v').value);
+    const p=parseFloat(r.querySelector('.nota-p').value);
+    if(!isNaN(v)&&!isNaN(p)){acumulado+=v*(p/100);pesoUsado+=p/100;}
+    else if(isNaN(v)&&!isNaN(p)) tieneVacia=true;
+  });
+
+  const pesoTotal=Math.round(pesoUsado*100);
+  warn.style.display=(pesoTotal>0&&pesoTotal!==100&&!tieneVacia)?'block':'none';
+
+  const pesoRestante=Math.max(0,1-pesoUsado);
+  const maxPosible=acumulado+5*pesoRestante;
+  const necesita=pesoRestante>0.001?(meta-acumulado)/pesoRestante:null;
+
+  // build metrics with animated counters
+  document.getElementById('metrics').innerHTML=`
+    <div class="metric">
+      <div class="metric-label">acumulado</div>
+      <div class="metric-val c-a1" id="mv-acu">0.00</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">máx. posible</div>
+      <div class="metric-val ${maxPosible>=meta?'c-green':'c-red'}" id="mv-max">0.00</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">meta</div>
+      <div class="metric-val" id="mv-meta">0.0</div>
+    </div>`;
+
+  setTimeout(()=>{
+    animateCount(document.getElementById('mv-acu'),acumulado,'',2);
+    animateCount(document.getElementById('mv-max'),maxPosible,'',2);
+    animateCount(document.getElementById('mv-meta'),meta,'',1);
+  },100);
+
+  let val,sub,cls,badge,badgeCls,lbl,isGood=false;
+
+  if(pesoRestante<=0.001){
+    lbl='nota final';
+    val=acumulado;
+    if(acumulado>=meta){sub='¡Felicitaciones, ganaste la materia! 🎓';cls='c-green';badge='✓ aprobado';badgeCls='badge-green';isGood=true;}
+    else{sub='No alcanzaste la nota mínima 😔';cls='c-red';badge='✗ reprobado';badgeCls='badge-red';}
+  } else if(necesita>5){
+    lbl='necesitarías en lo que falta';val=necesita;
+    sub='Es imposible — la nota máxima es 5.0 😞';cls='c-red';badge='✗ no es posible';badgeCls='badge-red';
+  } else if(necesita<=0){
+    lbl='necesitas en lo que falta';val=0;
+    sub='¡Ya tienes asegurado el mínimo para ganar! 🔥';cls='c-green';badge='✓ ya ganaste';badgeCls='badge-green';isGood=true;
+  } else {
+    lbl='necesitas en lo que falta';val=necesita;
+    if(necesita>=4.5){sub='Muy difícil — necesitas casi la nota máxima 😬';cls='c-red';badge='⚡ muy difícil';badgeCls='badge-red';}
+    else if(necesita>=3.5){sub='Difícil pero posible — a estudiar fuerte 💪';cls='c-amber';badge='⚡ difícil';badgeCls='badge-amber';}
+    else{sub='¡Vas bien, tú puedes lograrlo! 🚀';cls='c-green';badge='✓ alcanzable';badgeCls='badge-green';isGood=true;}
+  }
+
+  document.getElementById('res-lbl').textContent=lbl;
+  const valEl=document.getElementById('res-val');
+  valEl.textContent='0.00';
+  valEl.className='main-result-val '+cls;
+  document.getElementById('res-sub').textContent=sub;
+  document.getElementById('res-badge').textContent=badge;
+  document.getElementById('res-badge').className='badge '+badgeCls;
+
+  const rc=document.getElementById('result');
+  rc.classList.remove('show');void rc.offsetWidth;rc.classList.add('show');
+
+  setTimeout(()=>{
+    const suffix = necesita>5 ? ' / 5.0' : (pesoRestante<=0.001 ? '' : ' / 5.0');
+    animateCount(valEl, Math.min(val,99), '', 2);
+    setTimeout(()=>{
+      if(necesita>5||(!pesoRestante<=0.001)) valEl.textContent=val.toFixed(2)+suffix;
+    },900);
+  },200);
+
+  if(isGood) setTimeout(launchConfetti,400);
+}
+
+/* ===== INIT ===== */
+addNota('3.0','20');
+addNota('3.7','20');
+addNota('1.1','20');
+addNota('2.5','20');
+addNota('','20');
+</script>
+</body>
+</html>
